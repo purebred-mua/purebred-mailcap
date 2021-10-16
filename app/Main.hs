@@ -1,8 +1,13 @@
 module Main where
 
-import qualified Data.Mailcap (mailcapFile)
+import System.Environment (getArgs)
+import qualified Data.Text.IO as T (getContents)
+import Data.Mailcap (parseMailcapfile)
 
 main :: IO ()
 main = do
-  putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+  print "accepting input"
+  contents <- T.getContents
+  print "parsing"
+  let parsed = parseMailcapfile contents
+  print $ show parsed
