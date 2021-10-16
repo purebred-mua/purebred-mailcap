@@ -35,6 +35,22 @@ library
     hs-source-dirs:   src
     default-language: Haskell2010
 
+test-suite tests
+  type: exitcode-stdio-1.0
+  default-language:    Haskell2010
+  ghc-options: -Wall -Wredundant-constraints
+  hs-source-dirs: tests
+  main-is: Main.hs
+  build-depends:
+    base
+    , attoparsec
+    , text
+    , purebred-mailcap
+    , time
+
+    , tasty
+    , tasty-hunit
+
 executable purebred-mailcap
     main-is:          Main.hs
 
@@ -43,9 +59,9 @@ executable purebred-mailcap
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:
-        base ^>=4.13.0.0,
-        purebred-mailcap
+    build-depends:    base ^>=4.13.0.0
+                    , text
+                    , purebred-mailcap
 
     hs-source-dirs:   app
     default-language: Haskell2010
