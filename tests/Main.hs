@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 -- This file is part of purebred-mailcap
 -- Copyright (C) 2021 Róman Joost
 --
@@ -14,36 +15,57 @@
 --
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import Data.Attoparsec.ByteString (parseOnly)
+import Data.Mailcap (Entry (..), Field (..), MailcapLine (..), comment, mailcapentry)
+import Data.RFC1524 (mtext)
 import Test.Tasty
 import Test.Tasty.HUnit
-import Data.Attoparsec.ByteString (parseOnly)
-
-import Data.Mailcap (comment, mailcapentry, MailcapLine(..), Entry(..), Field(..))
 
 main :: IO ()
 main =
-  defaultMain $ testGroup "Tests"
-    [ tests ]
+  defaultMain $
+    testGroup
+      "Tests"
+      [tests]
 
 tests :: TestTree
-tests = testGroup "Parser tests"
-  [ testCommentParsing
-  , testEntryParsing
-  ]
+tests =
+  testGroup
+    "Parser tests"
+    [ testFieldParsing,
+      testEntryParsing
+    ]
 
-testCommentParsing :: TestTree
-testCommentParsing = testGroup "Mailcap Comment tests"
-  [ testCase "empty comment" $
-      parseOnly comment "# \n"
-      @?= Right (Comment "")
-  , testCase "multiple comments" $
-      parseOnly comment "# This is a comment \n"
-      @?= Right (Comment "This is a comment ")
-  ]
+testFieldParsing :: TestTree
+testFieldParsing =
+  testGroup
+    "Mailcap field tests"
+    [ testCase "empty comment" $
+        parseOnly comment "# \n"
+          @?= Right (Comment "")
+    , testCase "multiple comments" $
+        parseOnly comment "# This is a comment \n"
+          @?= Right (Comment "This is a comment ")
+    , testCase "mtext" $
+        parseOnly mtext "rplay %s\\; exit 1"
+          @?= Right "rplay %s; exit 1"
+    ]
 
 testEntryParsing :: TestTree
-testEntryParsing = testGroup "Mailcap Entry tests"
-  [ testCase "mandatory fields only" $
-      parseOnly mailcapentry "application/octet-stream; hexdump; needsterminal; copiousoutput; x11-bitmap=\"/usr/lib/zmail\"\n"
-      @?= Right (MailcapEntry $ Entry { _contentType = "application/octet-stream", _viewCommand = "hexdump", _fields= [NeedsTerminal, CopiousOutput, X11Bitmap "/usr/lib/zmail"]})
-  ]
+testEntryParsing =
+  testGroup
+    "Mailcap Entry tests"
+    [ testCase "mandatory fields only" $
+        parseOnly mailcapentry "application/octet-stream; hexdump\n"
+          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump\n", _fields = []})
+    , testCase "flags and named fields (case insensitive)" $
+        parseOnly mailcapentry "application/octet-stream; hexdump; neEdstErmInal; copiOusoUtput; x11-BItmap=\"/usr/lib/zmail\"\n"
+          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump", _fields = [Flag "needsterminal", Flag "copiousoutput", X11Bitmap "\"/usr/lib/zmail\"\n"]})
+    , testCase "wildcard content type" $
+        parseOnly mailcapentry "audio/*; rplay %s\\; exit 1\n"
+          @?= Right (MailcapEntry $ Entry {_contentType = "audio/*", _viewCommand = "rplay %s; exit 1\n", _fields = []})
+    , testCase "named fields" $
+        parseOnly mailcapentry "audio/x-pn-mp3;     realplayer %s; test=test \"$DISPLAY\" != \"\""
+          @?= Right (MailcapEntry $ Entry {_contentType = "audio/x-pn-mp3", _viewCommand = "realplayer %s", _fields = [Test "test \"$DISPLAY\" != \"\""]})
+    ]

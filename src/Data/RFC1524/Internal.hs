@@ -1,4 +1,8 @@
-module Data.Mailcap.Internal (ContentType(..), parseContentType, ci, token) where
+module Data.RFC1524.Internal (
+  ContentType(..)
+  , parseContentType
+  , ci
+  , token) where
 
 import Data.String (IsString(fromString))
 import Data.Attoparsec.ByteString.Char8 (char8)
