@@ -110,13 +110,13 @@ composefield = do
   pure $ Compose path
 
 edit :: Parser Field
-edit = (stringCI "edit") *> equal *> mtext <&> Edit
+edit = stringCI "edit" *> equal *> mtext <&> Edit
 
 test :: Parser Field
-test = (stringCI "test") *> equal *> mtext <&> Test
+test = stringCI "test" *> equal *> mtext <&> Test
 
 x11bitmap :: Parser Field
-x11bitmap = (stringCI "x11-bitmap") *> equal *> mtext <&> X11Bitmap
+x11bitmap = stringCI "x11-bitmap" *> equal *> mtext <&> X11Bitmap
 
 -- | Flags
 flag :: Parser Field
