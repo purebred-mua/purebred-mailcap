@@ -28,12 +28,7 @@ library
                     , Data.RFC1524
                     , Data.RFC1524.Internal
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.13.0.0
+    build-depends:    base >= 4.11 && < 5
                     , attoparsec
                     , text
                     , bytestring
@@ -65,7 +60,7 @@ executable purebred-mailcap
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.13.0.0
+    build-depends:    base >= 4.11 && < 5
                     , text
                     , purebred-mailcap
 
