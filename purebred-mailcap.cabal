@@ -2,9 +2,12 @@ cabal-version:      2.4
 name:               purebred-mailcap
 version:            0.1.0.0
 synopsis:           A parser for parsing mailcap (RFC1524) files
-
--- A longer description of the package.
--- description:
+description:
+  A library to parse mailcap files (see RFC1524)
+  .
+  Things that are work in progress:
+  .
+  - RFC1524 mailcap files parsing
 
 -- A URL where users can report bugs.
 -- bug-reports:
