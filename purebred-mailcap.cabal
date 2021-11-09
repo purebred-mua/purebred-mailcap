@@ -1,39 +1,34 @@
 cabal-version:      2.4
 name:               purebred-mailcap
 version:            0.1.0.0
-
--- A short (one-line) description of the package.
--- synopsis:
-
--- A longer description of the package.
--- description:
+synopsis:           A parser for parsing mailcap (RFC1524) files
+description:
+  A library to parse mailcap files (see RFC1524)
+  .
+  Things that are work in progress:
+  .
+  - RFC1524 mailcap files parsing
 
 -- A URL where users can report bugs.
 -- bug-reports:
 
--- The license under which the package is released.
--- license:
+license:            AGPL-3.0-or-later
+license-file:       LICENSE
 author:             Róman Joost
 maintainer:         roman@bromeco.de
 tested-with:
   GHC ==8.8.4 || ==8.10.4 || ==9.0.1
 
--- A copyright notice.
--- copyright:
--- category:
-extra-source-files: CHANGELOG.md
+copyright:           Copyright 2021 Róman Joost
+category:            Data, Email
+extra-source-files:  CHANGELOG.md
 
 library
     exposed-modules:  Data.Mailcap
                     , Data.RFC1524
                     , Data.RFC1524.Internal
 
-    -- Modules included in this library but not exported.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.13.0.0
+    build-depends:    base >= 4.11 && < 5
                     , attoparsec
                     , text
                     , bytestring
@@ -65,8 +60,8 @@ executable purebred-mailcap
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.13.0.0
-                    , text
+    build-depends:    base >= 4.11 && < 5
+                    , bytestring
                     , purebred-mailcap
 
     hs-source-dirs:   app
