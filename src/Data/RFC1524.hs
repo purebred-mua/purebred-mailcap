@@ -66,7 +66,7 @@ mailcapline = mailcapentry <|> comment
 mailcapentry :: Parser MailcapLine
 mailcapentry = do
   ct <- typefield
-  skipMany1 semicolon
+  semicolon
   vc <- skipSpace *> viewCommand
   skipMany semicolon
   fields <- field `sepBy` char8 ';'
@@ -101,13 +101,16 @@ field :: Parser Field
 field = skipSpaceOrQChar *> (flag <|> namedfield)
 
 namedfield :: Parser Field
-namedfield = composefield <|> test <|> x11bitmap <|> description <|> edit
+namedfield = composefield <|> printfield <|> test <|> x11bitmap <|> description <|> edit
 
 description :: Parser Field
 description = stringCI "description" *> equal *> mtext <&> Description
 
 composefield :: Parser Field
 composefield = stringCI "compose" *> equal *> mtext <&> Compose
+
+printfield :: Parser Field
+printfield = stringCI "print" *> equal *> mtext <&> Print
 
 edit :: Parser Field
 edit = stringCI "edit" *> equal *> mtext <&> Edit

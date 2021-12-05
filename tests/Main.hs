@@ -113,5 +113,15 @@ testEntryParsing =
                         Description "\"An audio fragment\""
                       ]
                   }
+            ),
+      testCase "print field" $
+        parseOnly mailcapentry "image/x-fax-g3;; print=printfax %s"
+          @?= Right
+            ( MailcapEntry $
+                Entry
+                  { _contentType = "image/x-fax-g3",
+                    _viewCommand = "",
+                    _fields = [Print "printfax %s"]
+                  }
             )
     ]
