@@ -101,13 +101,22 @@ field :: Parser Field
 field = skipSpaceOrQChar *> (flag <|> namedfield)
 
 namedfield :: Parser Field
-namedfield = composefield <|> printfield <|> test <|> x11bitmap <|> description <|> edit
+namedfield = composefield
+             <|> composetypedfield
+             <|> printfield
+             <|> test
+             <|> x11bitmap
+             <|> description
+             <|> edit
 
 description :: Parser Field
 description = stringCI "description" *> equal *> mtext <&> Description
 
 composefield :: Parser Field
 composefield = stringCI "compose" *> equal *> mtext <&> Compose
+
+composetypedfield :: Parser Field
+composetypedfield = stringCI "composetyped" *> equal *> mtext <&> ComposeTyped
 
 printfield :: Parser Field
 printfield = stringCI "print" *> equal *> mtext <&> Print
@@ -139,7 +148,7 @@ comment = do
 
 -- | Parsing Help
 equal :: Parser ()
-equal = char8 '=' $> ()
+equal = skipSpace *> char8 '=' *> skipSpace $> ()
 
 skipQuote :: Parser ()
 skipQuote = skip (== 34)

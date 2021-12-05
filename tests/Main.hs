@@ -101,7 +101,7 @@ testEntryParsing =
                   }
             ),
       testCase "multiline entry" $
-        parseOnly mailcapentry "audio/basic; showaudio %s; compose=audiocompose %s; \\n\tedit=audiocompose %s; description=\"An audio fragment\""
+        parseOnly mailcapentry "audio/basic; showaudio %s; compose=audiocompose %s; \\\n\tedit=audiocompose %s; description=\"An audio fragment\""
           @?= Right
             ( MailcapEntry $
                 Entry
@@ -122,6 +122,18 @@ testEntryParsing =
                   { _contentType = "image/x-fax-g3",
                     _viewCommand = "",
                     _fields = [Print "printfax %s"]
+                  }
+            ),
+      testCase "composetyped field" $
+        parseOnly mailcapentry "message/external-body; showexternal %s %{access-type} %{name} %{site} \\\n\t%{directory} %{mode} %{server}; \\\n\tneedsterminal; composetyped = extcompose %s; \\\n\tdescription=\"A reference to data stored in an external location\""
+          @?= Right
+            ( MailcapEntry $
+                Entry
+                  { _contentType = "message/external-body",
+                    _viewCommand = "showexternal %s %{access-type} %{name} %{site} \n\t%{directory} %{mode} %{server}",
+                    _fields = [Flag "needsterminal",
+                               ComposeTyped "extcompose %s",
+                               Description "\"A reference to data stored in an external location\""]
                   }
             )
     ]
