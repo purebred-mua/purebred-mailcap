@@ -43,11 +43,11 @@ testFieldParsing =
     "Mailcap field tests"
     [ testCase "empty comment" $
         parseOnly comment "# \n"
-          @?= Right (Comment "")
-    , testCase "multiple comments" $
+          @?= Right (Comment ""),
+      testCase "multiple comments" $
         parseOnly comment "# This is a comment \n"
-          @?= Right (Comment "This is a comment ")
-    , testCase "mtext" $
+          @?= Right (Comment "This is a comment "),
+      testCase "mtext" $
         parseOnly mtext "rplay %s\\; exit 1"
           @?= Right "rplay %s; exit 1"
     ]
@@ -58,14 +58,17 @@ testEntryParsing =
     "Mailcap Entry tests"
     [ testCase "mandatory fields only" $
         parseOnly mailcapentry "application/octet-stream; hexdump\n"
-          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump\n", _fields = []})
-    , testCase "flags and named fields (case insensitive)" $
+          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump\n", _fields = []}),
+      testCase "flags and named fields (case insensitive)" $
         parseOnly mailcapentry "application/octet-stream; hexdump; neEdstErmInal; copiOusoUtput; x11-BItmap=\"/usr/lib/zmail\"\n"
-          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump", _fields = [Flag "needsterminal", Flag "copiousoutput", X11Bitmap "\"/usr/lib/zmail\"\n"]})
-    , testCase "wildcard content type" $
+          @?= Right (MailcapEntry $ Entry {_contentType = "application/octet-stream", _viewCommand = "hexdump", _fields = [Flag "needsterminal", Flag "copiousoutput", X11Bitmap "\"/usr/lib/zmail\"\n"]}),
+      testCase "wildcard content type" $
         parseOnly mailcapentry "audio/*; rplay %s\\; exit 1\n"
-          @?= Right (MailcapEntry $ Entry {_contentType = "audio/*", _viewCommand = "rplay %s; exit 1\n", _fields = []})
-    , testCase "named fields" $
+          @?= Right (MailcapEntry $ Entry {_contentType = "audio/*", _viewCommand = "rplay %s; exit 1\n", _fields = []}),
+      testCase "named fields" $
         parseOnly mailcapentry "audio/x-pn-mp3;     realplayer %s; test=test \"$DISPLAY\" != \"\""
-          @?= Right (MailcapEntry $ Entry {_contentType = "audio/x-pn-mp3", _viewCommand = "realplayer %s", _fields = [Test "test \"$DISPLAY\" != \"\""]})
+          @?= Right (MailcapEntry $ Entry {_contentType = "audio/x-pn-mp3", _viewCommand = "realplayer %s", _fields = [Test "test \"$DISPLAY\" != \"\""]}),
+      testCase "multiline entry" $
+        parseOnly mailcapentry "audio/basic; showaudio %s; compose=audiocompose %s; \\n\tedit=audiocompose %s; description=\"An audio fragment\""
+          @?= Right (MailcapEntry $ Entry {_contentType = "audio/basic", _viewCommand = "showaudio %s", _fields = [Compose "audiocompose %s", Edit "audiocompose %s", Description "\"An audio fragment\""]})
     ]

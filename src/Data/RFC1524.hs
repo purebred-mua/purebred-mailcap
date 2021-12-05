@@ -15,7 +15,7 @@ module Data.RFC1524 (
 
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
-import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, skipSpace, stringCI)
+import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Functor (($>), (<&>))
@@ -94,20 +94,20 @@ schar = satisfy excludeMchar
 qchar :: Parser Word8
 qchar = char8 '\\' *> anyWord8
 
+skipSpaceOrQChar :: Parser ()
+skipSpaceOrQChar = skipMany ((space $> ()) <|> (qchar $> ()))
+
 field :: Parser Field
-field = skipSpace *> (flag <|> namedfield)
+field = skipSpaceOrQChar *> (flag <|> namedfield)
 
 namedfield :: Parser Field
-namedfield = composefield <|> test <|> x11bitmap
+namedfield = composefield <|> test <|> x11bitmap <|> description <|> edit
+
+description :: Parser Field
+description = stringCI "description" *> equal *> mtext <&> Description
 
 composefield :: Parser Field
-composefield = do
-  stringCI "compose"
-  equal
-  -- TODO shell command
-  path <- skipQuote *> takeTill (== 34)
-  skipQuote
-  pure $ Compose path
+composefield = stringCI "compose" *> equal *> mtext <&> Compose
 
 edit :: Parser Field
 edit = stringCI "edit" *> equal *> mtext <&> Edit
