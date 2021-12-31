@@ -15,7 +15,7 @@ module Data.RFC1524 (
 
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
-import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space)
+import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Functor (($>), (<&>))
@@ -67,10 +67,13 @@ mailcapentry :: Parser MailcapLine
 mailcapentry = do
   ct <- typefield
   semicolon
-  vc <- skipSpace *> viewCommand
-  skipMany semicolon
-  fields <- field `sepBy` char8 ';'
+  skipSpace
+  vc <- viewCommand <* (endOfLine <|> semicolon)
+  fields <- fieldList
   pure $ MailcapEntry $ Entry ct vc fields
+
+fieldList :: Parser [Field]
+fieldList = field `sepBy` char8 ';'
 
 typefield :: Parser ContentType
 typefield = parseContentType
@@ -86,10 +89,19 @@ mchar :: Parser Word8
 mchar = qchar <|> schar
 
 schar :: Parser Word8
-schar = satisfy excludeMchar
+schar = satisfy notMChar
   where
-    excludeMchar :: Word8 -> Bool
-    excludeMchar c = c /= 59 && c /= 92
+    notMChar :: Word8 -> Bool
+    notMChar = not . isMChar
+
+isMChar :: Word8 -> Bool
+isMChar c = c == 59 -- ';'
+            || c == 92 -- '\'
+            || c == 10
+
+-- any ASCII control character
+isCTLS :: Word8 -> Bool
+isCTLS c = c >= 0 && c <= 31 || c == 127
 
 qchar :: Parser Word8
 qchar = char8 '\\' *> anyWord8
@@ -142,9 +154,9 @@ copiousoutput = stringCI "copiousoutput" $> Flag "copiousoutput"
 
 -- | Comments
 comment :: Parser MailcapLine
-comment = do
-  txt <- string "#" *> skipSpace *> takeTill isEndOfLine
-  pure $ Comment txt
+comment =
+  (satisfy isEndOfLine $> Comment "")
+  <|> (string "#" *> skipSpace *> takeTill isEndOfLine <&> Comment)
 
 -- | Parsing Help
 equal :: Parser ()

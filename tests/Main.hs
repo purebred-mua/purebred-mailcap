@@ -49,7 +49,10 @@ testFieldParsing =
           @?= Right (Comment "This is a comment "),
       testCase "mtext" $
         parseOnly mtext "rplay %s\\; exit 1"
-          @?= Right "rplay %s; exit 1"
+          @?= Right "rplay %s; exit 1",
+      testCase "mtext with newline" $
+        parseOnly mtext "rplay %s\n"
+          @?= Right "rplay %s"
     ]
 
 testEntryParsing :: TestTree
@@ -62,7 +65,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "application/octet-stream",
-                    _viewCommand = "hexdump\n",
+                    _viewCommand = "hexdump",
                     _fields = []
                   }
             ),
@@ -76,7 +79,7 @@ testEntryParsing =
                     _fields =
                       [ Flag "needsterminal",
                         Flag "copiousoutput",
-                        X11Bitmap "\"/usr/lib/zmail\"\n"
+                        X11Bitmap "\"/usr/lib/zmail\""
                       ]
                   }
             ),
@@ -86,7 +89,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "audio/*",
-                    _viewCommand = "rplay %s; exit 1\n",
+                    _viewCommand = "rplay %s; exit 1",
                     _fields = []
                   }
             ),
@@ -122,6 +125,26 @@ testEntryParsing =
                   { _contentType = "image/x-fax-g3",
                     _viewCommand = "",
                     _fields = [Print "printfax %s"]
+                  }
+            ),
+      testCase "textual new lines - truthy" $
+        parseOnly mailcapentry "application/x-backup; /usr/bin/backup %s; textualnewlines=1; test=test -n \"$DISPLAY\""
+          @?= Right
+            ( MailcapEntry $
+                Entry
+                  { _contentType = "application/x-backup",
+                    _viewCommand = "/usr/bin/backup %s",
+                    _fields = [TextualNewlines True, Test "test -n \"$DISPLAY\""]
+                  }
+            ),
+      testCase "textual new lines - falsy" $
+        parseOnly mailcapentry "application/x-backup; /usr/bin/backup %s; textualnewlines=0; test=test -n \"$DISPLAY\""
+          @?= Right
+            ( MailcapEntry $
+                Entry
+                  { _contentType = "application/x-backup",
+                    _viewCommand = "/usr/bin/backup %s",
+                    _fields = [TextualNewlines False, Test "test -n \"$DISPLAY\""]
                   }
             ),
       testCase "composetyped field" $
