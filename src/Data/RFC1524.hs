@@ -13,6 +13,7 @@ module Data.RFC1524 (
   , Field (..)
   ) where
 
+import Prelude hiding (print)
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
 import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine)
@@ -113,9 +114,9 @@ field :: Parser Field
 field = skipSpaceOrQChar *> (flag <|> namedfield)
 
 namedfield :: Parser Field
-namedfield = composefield
-             <|> composetypedfield
-             <|> printfield
+namedfield = compose
+             <|> composetyped
+             <|> print
              <|> test
              <|> x11bitmap
              <|> description
@@ -125,14 +126,14 @@ namedfield = composefield
 description :: Parser Field
 description = stringCI "description" *> equal *> mtext <&> Description
 
-composefield :: Parser Field
-composefield = stringCI "compose" *> equal *> mtext <&> Compose
+compose :: Parser Field
+compose = stringCI "compose" *> equal *> mtext <&> Compose
 
-composetypedfield :: Parser Field
-composetypedfield = stringCI "composetyped" *> equal *> mtext <&> ComposeTyped
+composetyped :: Parser Field
+composetyped = stringCI "composetyped" *> equal *> mtext <&> ComposeTyped
 
-printfield :: Parser Field
-printfield = stringCI "print" *> equal *> mtext <&> Print
+print :: Parser Field
+print = stringCI "print" *> equal *> mtext <&> Print
 
 textualnewlines :: Parser Field
 textualnewlines = stringCI "textualnewlines" *> equal *> truthy <&> TextualNewlines
