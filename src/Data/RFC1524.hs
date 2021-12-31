@@ -70,8 +70,7 @@ mailcapentry = do
   semicolon
   skipSpace
   vc <- viewCommand <* (endOfLine <|> semicolon)
-  fields <- fieldList
-  pure $ MailcapEntry $ Entry ct vc fields
+  MailcapEntry . Entry ct vc <$> fieldList
 
 fieldList :: Parser [Field]
 fieldList = field `sepBy` char8 ';'
