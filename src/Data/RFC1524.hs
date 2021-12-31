@@ -47,7 +47,7 @@ data Field
   | Edit B.ByteString
   | Test B.ByteString
   | X11Bitmap B.ByteString
-  | TextualNewlines B.ByteString
+  | TextualNewlines Bool
   | Description B.ByteString
   | XToken
   deriving (Show, Eq)
@@ -120,6 +120,7 @@ namedfield = composefield
              <|> x11bitmap
              <|> description
              <|> edit
+             <|> textualnewlines
 
 description :: Parser Field
 description = stringCI "description" *> equal *> mtext <&> Description
@@ -132,6 +133,18 @@ composetypedfield = stringCI "composetyped" *> equal *> mtext <&> ComposeTyped
 
 printfield :: Parser Field
 printfield = stringCI "print" *> equal *> mtext <&> Print
+
+textualnewlines :: Parser Field
+textualnewlines = stringCI "textualnewlines" *> equal *> truthy <&> TextualNewlines
+
+truthy :: Parser Bool
+truthy = (stringCI "True" $> True)
+         <|> stringCI "False" $> False
+         <|> (satisfy isTruthy $> True)
+         <|> mtext $> False
+  where
+    isTruthy :: Word8 -> Bool
+    isTruthy c = c == 49
 
 edit :: Parser Field
 edit = stringCI "edit" *> equal *> mtext <&> Edit
