@@ -3,14 +3,17 @@ module Data.RFC1524.Internal
     parseContentType,
     ci,
     token,
+    niceEndOfInput,
   )
 where
 
 import Data.Attoparsec.ByteString
-import Data.Attoparsec.ByteString.Char8 (char8)
+import qualified Data.Attoparsec.Internal.Types as AT
+import Data.Attoparsec.ByteString.Char8 (char8, peekChar')
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.CaseInsensitive as CI
+import Control.Applicative ((<|>))
 import Data.String (IsString (fromString))
 
 -- borrowed from purebred-email
@@ -39,3 +42,15 @@ token =
   takeWhile1 (\c -> c >= 33 && c <= 126 && notInClass "()<>@,;:\\\"/[]?=" c)
 
 -- end --
+
+niceEndOfInput :: Parser ()
+niceEndOfInput = endOfInput <|> p
+  where
+    p = do
+      c <- peekChar'
+      end <- takeByteString
+      off <- offset
+      fail $ "unexpected " <> show c <> " at offset " <> show off <> "remaining: " <> show end
+
+offset :: AT.Parser i Int
+offset = AT.Parser $ \t pos more _lose suc -> suc t pos more (AT.fromPos pos)

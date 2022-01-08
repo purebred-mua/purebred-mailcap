@@ -56,7 +56,7 @@ data Field
 type ViewCommand = T.Text
 
 parseMailcapfile :: B.ByteString -> Either String MailcapFile
-parseMailcapfile = parseOnly (mailcapfile <* endOfInput)
+parseMailcapfile = parseOnly (mailcapfile <* niceEndOfInput)
 
 mailcapfile :: Parser MailcapFile
 mailcapfile = many' mailcapline
