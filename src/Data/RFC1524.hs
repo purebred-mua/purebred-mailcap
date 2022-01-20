@@ -8,9 +8,12 @@ module Data.RFC1524 (
   , comment
   , mtext
   , needsterminal
+    executableCommand,
   , MailcapLine (..)
   , Entry (..)
   , Field (..)
+    ExecutableCommand (..),
+    ShellArgument (..),
   ) where
 
 import Prelude hiding (print)
@@ -35,7 +38,7 @@ data MailcapLine
 
 data Entry = Entry
   { _contentType :: ContentType,
-    _viewCommand :: B.ByteString,
+    _viewCommand :: ExecutableCommand,
     _fields :: [Field]
   }
   deriving (Show, Eq)
@@ -78,9 +81,8 @@ fieldList = field `sepBy` char8 ';'
 typefield :: Parser ContentType
 typefield = parseContentType
 
--- TODO should be a shell command
-viewCommand :: Parser B.ByteString
-viewCommand = mtext
+viewCommand :: Parser ExecutableCommand
+viewCommand = executableCommand
 
 mtext :: Parser B.ByteString
 mtext = many' mchar <&> B.pack
@@ -170,6 +172,24 @@ comment :: Parser MailcapLine
 comment =
   (satisfy isEndOfLine $> Comment "")
   <|> (string "#" *> skipSpace *> takeTill isEndOfLine <&> Comment)
+
+-- | Parsing of executable commands
+data ShellArgument
+  = ShellCommandFragment String -- xwd -frame | foo | bar
+  | MailbodyPath -- %s
+  | ContentType -- %t e.g. text/plain
+  | NamedContentTypeParameter String -- 42 from boundary=42
+  deriving (Show, Eq)
+
+data ExecutableCommand
+  = ShellCommand String
+  | ParametrisedShellCommand [ShellArgument]
+  deriving (Show, Eq)
+
+executableCommand :: Parser ExecutableCommand
+executableCommand = do
+  h <- mtext
+  pure $ ShellCommand (C8.unpack h)
 
 -- | Parsing Help
 equal :: Parser ()
