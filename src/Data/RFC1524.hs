@@ -81,9 +81,6 @@ fieldList = field `sepBy` char8 ';'
 typefield :: Parser ContentType
 typefield = parseContentType
 
-viewCommand :: Parser ExecutableCommand
-viewCommand = executableCommand
-
 mtext :: Parser B.ByteString
 mtext = many' mchar <&> B.pack
 
@@ -175,21 +172,38 @@ comment =
 
 -- | Parsing of executable commands
 data ShellArgument
-  = ShellCommandFragment String -- xwd -frame | foo | bar
-  | MailbodyPath -- %s
-  | ContentType -- %t e.g. text/plain
+  = Argument String -- xwd -frame | foo | bar
+  | MailbodyPathTemplate -- %s
+  | ContentTypeTemplate -- %t e.g. text/plain
   | NamedContentTypeParameter String -- 42 from boundary=42
   deriving (Show, Eq)
 
-data ExecutableCommand
-  = ShellCommand String
-  | ParametrisedShellCommand [ShellArgument]
+newtype ExecutableCommand
+  = ShellCommand [ShellArgument]
   deriving (Show, Eq)
 
-executableCommand :: Parser ExecutableCommand
-executableCommand = do
-  h <- mtext
-  pure $ ShellCommand (C8.unpack h)
+viewCommand :: Parser ExecutableCommand
+viewCommand = do
+  args <- shellargument `sepBy` space
+  pure $ ShellCommand args
+
+shellargument :: Parser ShellArgument
+shellargument =
+  (string "%s" $> MailbodyPathTemplate)
+    <|> (string "%t" $> ContentTypeTemplate)
+    <|> argument
+
+-- parse an argument of a command line typically just the command line
+-- path or a shell pipe
+-- e.g. xwd - frame | foo | bar
+argument :: Parser ShellArgument
+argument = Argument . C8.unpack <$> takeTill (\w -> isSpace_w8 w || isEndOfLine w || isSemicolon w)
+  where
+    isSemicolon c = c == 59
+
+-- TODO
+posixpath :: Parser B.ByteString
+posixpath = mtext <* (endOfLine <|> semicolon)
 
 -- | Parsing Help
 equal :: Parser ()
