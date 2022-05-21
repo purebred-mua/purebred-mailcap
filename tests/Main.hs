@@ -52,7 +52,11 @@ testExecutableCommandParsing =
           @?= Right (ShellCommand [Argument "/usr/bin/xpaint", MailbodyPathTemplate]),
       testCase "shellpipe" $
         parseOnly viewCommand "xwd - frame | foo | bar %s"
-          @?= Right (ShellCommand [Argument "xwd", MailbodyPathTemplate])
+          @?= Right (ShellCommand [Argument "xwd", Argument "-", Argument "frame", Argument "|", Argument "foo", Argument "|", Argument "bar",  MailbodyPathTemplate]),
+      -- TODO: won't parse rplay %s\\; exit 1
+      testCase "quoted characters" $
+        parseOnly viewCommand "rplay %s \\; exit 1"
+          @?= Right (ShellCommand [Argument "rplay",  MailbodyPathTemplate, Argument ";", Argument "exit", Argument "1"])
     ]
 
 testFieldParsing :: TestTree

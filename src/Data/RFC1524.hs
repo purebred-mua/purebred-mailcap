@@ -8,12 +8,14 @@ module Data.RFC1524 (
   , comment
   , mtext
   , needsterminal
-    executableCommand,
+  , viewCommand
+  , shellargument
+  , argument
   , MailcapLine (..)
   , Entry (..)
   , Field (..)
-    ExecutableCommand (..),
-    ShellArgument (..),
+  , ExecutableCommand (..)
+  , ShellArgument (..)
   ) where
 
 import Prelude hiding (print)
@@ -176,6 +178,7 @@ data ShellArgument
   | MailbodyPathTemplate -- %s
   | ContentTypeTemplate -- %t e.g. text/plain
   | NamedContentTypeParameter String -- 42 from boundary=42
+  | FChar B.ByteString
   deriving (Show, Eq)
 
 newtype ExecutableCommand
@@ -184,7 +187,7 @@ newtype ExecutableCommand
 
 viewCommand :: Parser ExecutableCommand
 viewCommand = do
-  args <- shellargument `sepBy` space
+  args <- shellargument `sepBy'` whitespace
   pure $ ShellCommand args
 
 shellargument :: Parser ShellArgument
@@ -192,18 +195,19 @@ shellargument =
   (string "%s" $> MailbodyPathTemplate)
     <|> (string "%t" $> ContentTypeTemplate)
     <|> argument
+    <|> (takeTill isSpace_w8 <&> FChar)
 
 -- parse an argument of a command line typically just the command line
 -- path or a shell pipe
 -- e.g. xwd - frame | foo | bar
 argument :: Parser ShellArgument
-argument = Argument . C8.unpack <$> takeTill (\w -> isSpace_w8 w || isEndOfLine w || isSemicolon w)
+argument = Argument . C8.unpack <$> consume
   where
-    isSemicolon c = c == 59
+    consume :: Parser B.ByteString
+    consume = many' fChar <&> B.pack
 
--- TODO
-posixpath :: Parser B.ByteString
-posixpath = mtext <* (endOfLine <|> semicolon)
+fChar :: Parser Word8
+fChar = qchar <|> satisfy (not . isSpace_w8)
 
 -- | Parsing Help
 equal :: Parser ()
@@ -214,3 +218,9 @@ skipQuote = skip (== 34)
 
 semicolon :: Parser ()
 semicolon = char8 ';' $> ()
+
+-- | parse only Space and horizontal tab
+whitespace :: Parser Word8
+whitespace = satisfy isWhitespace
+
+isWhitespace c = c == 32 || c == 9
