@@ -8,9 +8,14 @@ module Data.RFC1524 (
   , comment
   , mtext
   , needsterminal
+  , viewCommand
+  , shellargument
+  , argument
   , MailcapLine (..)
   , Entry (..)
   , Field (..)
+  , ExecutableCommand (..)
+  , ShellArgument (..)
   ) where
 
 import Prelude hiding (print)
@@ -35,7 +40,7 @@ data MailcapLine
 
 data Entry = Entry
   { _contentType :: ContentType,
-    _viewCommand :: B.ByteString,
+    _viewCommand :: ExecutableCommand,
     _fields :: [Field]
   }
   deriving (Show, Eq)
@@ -77,10 +82,6 @@ fieldList = field `sepBy` char8 ';'
 
 typefield :: Parser ContentType
 typefield = parseContentType
-
--- TODO should be a shell command
-viewCommand :: Parser B.ByteString
-viewCommand = mtext
 
 mtext :: Parser B.ByteString
 mtext = many' mchar <&> B.pack
@@ -171,6 +172,43 @@ comment =
   (satisfy isEndOfLine $> Comment "")
   <|> (string "#" *> skipSpace *> takeTill isEndOfLine <&> Comment)
 
+-- | Parsing of executable commands
+data ShellArgument
+  = Argument String -- xwd -frame | foo | bar
+  | MailbodyPathTemplate -- %s
+  | ContentTypeTemplate -- %t e.g. text/plain
+  | NamedContentTypeParameter String -- 42 from boundary=42
+  | FChar B.ByteString
+  deriving (Show, Eq)
+
+newtype ExecutableCommand
+  = ShellCommand [ShellArgument]
+  deriving (Show, Eq)
+
+viewCommand :: Parser ExecutableCommand
+viewCommand = do
+  args <- shellargument `sepBy'` whitespace
+  pure $ ShellCommand args
+
+shellargument :: Parser ShellArgument
+shellargument =
+  (string "%s" $> MailbodyPathTemplate)
+    <|> (string "%t" $> ContentTypeTemplate)
+    <|> argument
+    <|> (takeTill isSpace_w8 <&> FChar)
+
+-- parse an argument of a command line typically just the command line
+-- path or a shell pipe
+-- e.g. xwd - frame | foo | bar
+argument :: Parser ShellArgument
+argument = Argument . C8.unpack <$> consume
+  where
+    consume :: Parser B.ByteString
+    consume = many' fChar <&> B.pack
+
+fChar :: Parser Word8
+fChar = qchar <|> satisfy (not . isSpace_w8)
+
 -- | Parsing Help
 equal :: Parser ()
 equal = skipSpace *> char8 '=' *> skipSpace $> ()
@@ -180,3 +218,9 @@ skipQuote = skip (== 34)
 
 semicolon :: Parser ()
 semicolon = char8 ';' $> ()
+
+-- | parse only Space and horizontal tab
+whitespace :: Parser Word8
+whitespace = satisfy isWhitespace
+
+isWhitespace c = c == 32 || c == 9

@@ -17,8 +17,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import Data.Attoparsec.ByteString (parseOnly)
-import Data.Mailcap (Entry (..), Field (..), MailcapLine (..), comment, mailcapentry)
-import Data.RFC1524 (mtext)
+import Data.Mailcap
 import Test.Tasty
 import Test.Tasty.HUnit
 
@@ -34,7 +33,30 @@ tests =
   testGroup
     "Parser tests"
     [ testFieldParsing,
-      testEntryParsing
+      testEntryParsing,
+      testExecutableCommandParsing
+    ]
+
+testExecutableCommandParsing :: TestTree
+testExecutableCommandParsing =
+  testGroup
+    "parsing of executable commands"
+    [ testCase "simple command" $
+        parseOnly viewCommand "xpaint"
+          @?= Right (ShellCommand [Argument "xpaint"]),
+      testCase "command with path" $
+        parseOnly viewCommand "/usr/bin/xpaint"
+          @?= Right (ShellCommand [Argument "/usr/bin/xpaint"]),
+      testCase "command with mailbody template" $
+        parseOnly viewCommand "/usr/bin/xpaint %s"
+          @?= Right (ShellCommand [Argument "/usr/bin/xpaint", MailbodyPathTemplate]),
+      testCase "shellpipe" $
+        parseOnly viewCommand "xwd - frame | foo | bar %s"
+          @?= Right (ShellCommand [Argument "xwd", Argument "-", Argument "frame", Argument "|", Argument "foo", Argument "|", Argument "bar",  MailbodyPathTemplate]),
+      -- TODO: won't parse rplay %s\\; exit 1
+      testCase "quoted characters" $
+        parseOnly viewCommand "rplay %s \\; exit 1"
+          @?= Right (ShellCommand [Argument "rplay",  MailbodyPathTemplate, Argument ";", Argument "exit", Argument "1"])
     ]
 
 testFieldParsing :: TestTree
@@ -65,7 +87,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "application/octet-stream",
-                    _viewCommand = "hexdump",
+                    _viewCommand = ShellCommand [Argument "hexdump"],
                     _fields = []
                   }
             ),
@@ -75,7 +97,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "application/octet-stream",
-                    _viewCommand = "hexdump",
+                    _viewCommand = ShellCommand [Argument "hexdump"],
                     _fields =
                       [ Flag "needsterminal",
                         Flag "copiousoutput",
@@ -89,7 +111,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "audio/*",
-                    _viewCommand = "rplay %s; exit 1",
+                    _viewCommand = ShellCommand [Argument "rplay %s; exit 1"],
                     _fields = []
                   }
             ),
@@ -99,7 +121,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "audio/x-pn-mp3",
-                    _viewCommand = "realplayer %s",
+                    _viewCommand = ShellCommand [Argument "realplayer", MailbodyPathTemplate],
                     _fields = [Test "test \"$DISPLAY\" != \"\""]
                   }
             ),
@@ -109,7 +131,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "audio/basic",
-                    _viewCommand = "showaudio %s",
+                    _viewCommand = ShellCommand [Argument "showaudio", MailbodyPathTemplate],
                     _fields =
                       [ Compose "audiocompose %s",
                         Edit "audiocompose %s",
@@ -118,12 +140,12 @@ testEntryParsing =
                   }
             ),
       testCase "print field" $
-        parseOnly mailcapentry "image/x-fax-g3;; print=printfax %s"
+        parseOnly mailcapentry "image/x-fax-g3; true; print=printfax %s"
           @?= Right
             ( MailcapEntry $
                 Entry
                   { _contentType = "image/x-fax-g3",
-                    _viewCommand = "",
+                    _viewCommand = ShellCommand [Argument "true"],
                     _fields = [Print "printfax %s"]
                   }
             ),
@@ -133,7 +155,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "application/x-backup",
-                    _viewCommand = "/usr/bin/backup %s",
+                    _viewCommand = ShellCommand [Argument "/usr/bin/backup", MailbodyPathTemplate],
                     _fields = [TextualNewlines True, Test "test -n \"$DISPLAY\""]
                   }
             ),
@@ -143,7 +165,7 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "application/x-backup",
-                    _viewCommand = "/usr/bin/backup %s",
+                    _viewCommand = ShellCommand [Argument "/usr/bin/backup", MailbodyPathTemplate],
                     _fields = [TextualNewlines False, Test "test -n \"$DISPLAY\""]
                   }
             ),
@@ -153,10 +175,12 @@ testEntryParsing =
             ( MailcapEntry $
                 Entry
                   { _contentType = "message/external-body",
-                    _viewCommand = "showexternal %s %{access-type} %{name} %{site} \n\t%{directory} %{mode} %{server}",
-                    _fields = [Flag "needsterminal",
-                               ComposeTyped "extcompose %s",
-                               Description "\"A reference to data stored in an external location\""]
+                    _viewCommand = ShellCommand [Argument "showexternal %s %{access-type} %{name} %{site} \n\t%{directory} %{mode} %{server}"],
+                    _fields =
+                      [ Flag "needsterminal",
+                        ComposeTyped "extcompose %s",
+                        Description "\"A reference to data stored in an external location\""
+                      ]
                   }
             )
     ]
