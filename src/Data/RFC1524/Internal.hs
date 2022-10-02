@@ -1,11 +1,9 @@
-module Data.RFC1524.Internal
-  ( ContentType (..),
-    parseContentType,
-    ci,
-    token,
-    niceEndOfInput,
-  )
-where
+module Data.RFC1524.Internal (
+  ContentType(..)
+  , parseContentType
+  , ci
+  , token
+  , qchar) where
 
 import Data.Attoparsec.ByteString
 import qualified Data.Attoparsec.Internal.Types as AT
@@ -13,8 +11,8 @@ import Data.Attoparsec.ByteString.Char8 (char8, peekChar')
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.CaseInsensitive as CI
-import Control.Applicative ((<|>))
-import Data.String (IsString (fromString))
+import Data.Word (Word8)
+import Data.String (IsString(..))
 
 -- borrowed from purebred-email
 data ContentType = ContentType (CI.CI B.ByteString) (CI.CI B.ByteString)
@@ -43,14 +41,5 @@ token =
 
 -- end --
 
-niceEndOfInput :: Parser ()
-niceEndOfInput = endOfInput <|> p
-  where
-    p = do
-      c <- peekChar'
-      end <- takeByteString
-      off <- offset
-      fail $ "unexpected " <> show c <> " at offset " <> show off <> "remaining: " <> show end
-
-offset :: AT.Parser i Int
-offset = AT.Parser $ \t pos more _lose suc -> suc t pos more (AT.fromPos pos)
+qchar :: Parser Word8
+qchar = char8 '\\' *> anyWord8
