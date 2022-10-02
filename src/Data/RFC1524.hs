@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Data.RFC1524 (
-    parseMailcapfile
-  , mailcapfile
+    mailcapfile
   , mailcapline
   , mailcapentry
   , comment
   , mtext
   , needsterminal
   , MailcapLine (..)
+  , MailcapFile(..)
   , Entry (..)
   , Field (..)
   ) where
@@ -16,7 +16,7 @@ module Data.RFC1524 (
 import Prelude hiding (print)
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
-import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine)
+import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine, peekChar')
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import Data.Functor (($>), (<&>))
@@ -25,6 +25,7 @@ import qualified Data.Text as T
 import qualified Data.CaseInsensitive as CI
 
 import Data.RFC1524.Internal
+import Data.RFC1524.ViewCommand
 
 type MailcapFile = [MailcapLine]
 
@@ -35,7 +36,7 @@ data MailcapLine
 
 data Entry = Entry
   { _contentType :: ContentType,
-    _viewCommand :: B.ByteString,
+    _viewCommand :: ExecutableCommand,
     _fields :: [Field]
   }
   deriving (Show, Eq)
@@ -54,9 +55,6 @@ data Field
   deriving (Show, Eq)
 
 type ViewCommand = T.Text
-
-parseMailcapfile :: B.ByteString -> Either String MailcapFile
-parseMailcapfile = parseOnly (mailcapfile <* niceEndOfInput)
 
 mailcapfile :: Parser MailcapFile
 mailcapfile = many' mailcapline
@@ -78,10 +76,6 @@ fieldList = field `sepBy` char8 ';'
 typefield :: Parser ContentType
 typefield = parseContentType
 
--- TODO should be a shell command
-viewCommand :: Parser B.ByteString
-viewCommand = mtext
-
 mtext :: Parser B.ByteString
 mtext = many' mchar <&> B.pack
 
@@ -102,9 +96,6 @@ isMChar c = c == 59 -- ';'
 -- any ASCII control character
 isCTLS :: Word8 -> Bool
 isCTLS c = c >= 0 && c <= 31 || c == 127
-
-qchar :: Parser Word8
-qchar = char8 '\\' *> anyWord8
 
 skipSpaceOrQChar :: Parser ()
 skipSpaceOrQChar = skipMany ((space $> ()) <|> (qchar $> ()))
