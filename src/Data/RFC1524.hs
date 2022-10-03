@@ -8,7 +8,7 @@ module Data.RFC1524 (
   , mtext
   , needsterminal
   , MailcapLine (..)
-  , MailcapFile(..)
+  , MailcapFile
   , Entry (..)
   , Field (..)
   ) where
@@ -16,13 +16,10 @@ module Data.RFC1524 (
 import Prelude hiding (print)
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
-import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine, peekChar')
+import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, skipSpace, stringCI, space, endOfLine)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Char8 as C8
 import Data.Functor (($>), (<&>))
 import Data.Word (Word8)
-import qualified Data.Text as T
-import qualified Data.CaseInsensitive as CI
 
 import Data.RFC1524.Internal
 import Data.RFC1524.ViewCommand
@@ -53,8 +50,6 @@ data Field
   | Description B.ByteString
   | XToken
   deriving (Show, Eq)
-
-type ViewCommand = T.Text
 
 mailcapfile :: Parser MailcapFile
 mailcapfile = many' mailcapline
@@ -92,10 +87,6 @@ isMChar :: Word8 -> Bool
 isMChar c = c == 59 -- ';'
             || c == 92 -- '\'
             || c == 10
-
--- any ASCII control character
-isCTLS :: Word8 -> Bool
-isCTLS c = c >= 0 && c <= 31 || c == 127
 
 skipSpaceOrQChar :: Parser ()
 skipSpaceOrQChar = skipMany ((space $> ()) <|> (qchar $> ()))
@@ -165,7 +156,7 @@ emptyline = endOfLine $> Comment "\n"
 
 prefixedcomment :: Parser MailcapLine
 prefixedcomment = do
-  string "#"
+  _ <- string "#"
   c <- commenttext
   skipSpace
   pure $ Comment c
@@ -178,9 +169,6 @@ prefixedcomment = do
 -- | Parsing Help
 equal :: Parser ()
 equal = skipSpace *> char8 '=' *> skipSpace $> ()
-
-skipQuote :: Parser ()
-skipQuote = skip (== 34)
 
 semicolon :: Parser ()
 semicolon = char8 ';' $> ()

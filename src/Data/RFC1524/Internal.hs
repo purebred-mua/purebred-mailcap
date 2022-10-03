@@ -6,8 +6,7 @@ module Data.RFC1524.Internal (
   , qchar) where
 
 import Data.Attoparsec.ByteString
-import qualified Data.Attoparsec.Internal.Types as AT
-import Data.Attoparsec.ByteString.Char8 (char8, peekChar')
+import Data.Attoparsec.ByteString.Char8 (char8)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.CaseInsensitive as CI

@@ -8,7 +8,7 @@ module Data.RFC1524.ViewCommand (
   ) where
 
 import Data.Functor (($>), (<&>))
-import Data.Attoparsec.ByteString.Char8 (char8, isEndOfLine, isSpace_w8, skipSpace, stringCI, space, endOfLine)
+import Data.Attoparsec.ByteString.Char8 (isSpace_w8)
 import Control.Applicative ((<|>))
 import Data.Attoparsec.ByteString
 import Data.Word (Word8)
