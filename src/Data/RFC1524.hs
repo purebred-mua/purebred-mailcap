@@ -60,7 +60,7 @@ mailcapfile :: Parser MailcapFile
 mailcapfile = many' mailcapline
 
 mailcapline :: Parser MailcapLine
-mailcapline = mailcapentry <|> comment
+mailcapline = comment <|> mailcapentry
 
 mailcapentry :: Parser MailcapLine
 mailcapentry = do
@@ -158,9 +158,22 @@ copiousoutput = stringCI "copiousoutput" $> Flag "copiousoutput"
 
 -- | Comments
 comment :: Parser MailcapLine
-comment =
-  (satisfy isEndOfLine $> Comment "")
-  <|> (string "#" *> skipSpace *> takeTill isEndOfLine <&> Comment)
+comment = emptyline <|> prefixedcomment
+
+emptyline :: Parser MailcapLine
+emptyline = endOfLine $> Comment "\n"
+
+prefixedcomment :: Parser MailcapLine
+prefixedcomment = do
+  string "#"
+  c <- commenttext
+  skipSpace
+  pure $ Comment c
+  where
+    commenttext :: Parser B.ByteString
+    commenttext = many' commentchar <&> B.pack
+    commentchar = qchar <|> notEOL
+    notEOL = satisfy (not . isEndOfLine)
 
 -- | Parsing Help
 equal :: Parser ()

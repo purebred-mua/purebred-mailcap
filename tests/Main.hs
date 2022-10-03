@@ -37,22 +37,51 @@ tests :: TestTree
 tests =
   testGroup
     "Parser tests"
-    [ testFieldParsing,
-      testEntryParsing,
-      testExecutableCommandParsing
+    [ testCommentParsing
+    , testMailcapfileParsing
+    , testFieldParsing
+    , testEntryParsing
+    ]
+
+testMailcapfileParsing :: TestTree
+testMailcapfileParsing =
+  testGroup
+    "Mailcap field tests"
+    [ testCase "multiple comments" $
+        parseOnly mailcapfile "# This is a comment \n# Another\n# comment"
+          @?= Right [Comment " This is a comment ", Comment " Another", Comment " comment"]
+    , testCase "whitespace prefixed" $
+        parseOnly mailcapfile "\n\n# comment\naudio/*; rplay %s\n"
+          @?= Right [ Comment "\n"
+                    , Comment "\n"
+                    , Comment " comment"
+                    , MailcapEntry $
+                      Entry { _contentType = "audio/*"
+                            , _viewCommand = ShellCommand [
+                                  Argument "rplay"
+                                , MailbodyPathTemplate]
+                            , _fields = []
+                            }
+                    ]
+    ]
+
+testCommentParsing :: TestTree
+testCommentParsing =
+  testGroup
+    "Mailcap field tests"
+    [ testCase "empty comment" $
+        parseOnly comment "# \n"
+          @?= Right (Comment " "),
+      testCase "commented out mailcap lines" $
+        parseOnly comment "#audio/basic; showaudio %s; compose=audiocompose %s;\\\n#\tedit=audiocompose %s; description=\"An audio fragment\"\n"
+          @?= Right (Comment "audio/basic; showaudio %s; compose=audiocompose %s;\n#\tedit=audiocompose %s; description=\"An audio fragment\"")
     ]
 
 testFieldParsing :: TestTree
 testFieldParsing =
   testGroup
     "Mailcap field tests"
-    [ testCase "empty comment" $
-        parseOnly comment "# \n"
-          @?= Right (Comment ""),
-      testCase "multiple comments" $
-        parseOnly comment "# This is a comment \n"
-          @?= Right (Comment "This is a comment "),
-      testCase "mtext" $
+    [ testCase "mtext" $
         parseOnly mtext "rplay %s\\; exit 1"
           @?= Right "rplay %s; exit 1",
       testCase "mtext with newline" $
