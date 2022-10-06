@@ -25,11 +25,13 @@ extra-source-files:  CHANGELOG.md
 
 library
     exposed-modules:  Data.Mailcap
+                    , Data.Mailcap.Command
                     , Data.RFC1524
                     , Data.RFC1524.Internal
                     , Data.RFC1524.ViewCommand
 
     build-depends:    base >= 4.11 && < 5
+                    , mtl
                     , attoparsec
                     , text
                     , bytestring
