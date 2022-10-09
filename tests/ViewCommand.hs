@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module ViewCommand where
 
-import Data.RFC1524.ViewCommand
+import Data.Mailcap.ViewCommand
 
 import Data.Attoparsec.ByteString (parseOnly)
 import Test.Tasty
