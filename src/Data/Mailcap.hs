@@ -8,7 +8,6 @@ module Data.Mailcap (
   , mtext
   , comment
   , MailcapFile
-  , MailcapLine(..)
   , Entry(..)
   , Field(..)
   ) where
@@ -41,12 +40,7 @@ offset :: AT.Parser i Int
 offset = AT.Parser $ \t pos more _lose suc -> suc t pos more (AT.fromPos pos)
 
 
-type MailcapFile = [MailcapLine]
-
-data MailcapLine
-  = Comment B.ByteString
-  | MailcapEntry Entry
-  deriving (Show, Eq)
+type MailcapFile = [Entry]
 
 data Entry = Entry
   { _contentType :: ContentType,
@@ -71,16 +65,16 @@ data Field
 mailcapfile :: Parser MailcapFile
 mailcapfile = many' mailcapline
 
-mailcapline :: Parser MailcapLine
-mailcapline = comment <|> mailcapentry
+mailcapline :: Parser Entry
+mailcapline = skipMany comment *> mailcapentry
 
-mailcapentry :: Parser MailcapLine
+mailcapentry :: Parser Entry
 mailcapentry = do
   ct <- typefield
   semicolon
   skipSpace
   vc <- viewCommand <* (endOfLine <|> semicolon)
-  MailcapEntry . Entry ct vc <$> fieldList
+  Entry ct vc <$> fieldList
 
 fieldList :: Parser [Field]
 fieldList = field `sepBy` char8 ';'
@@ -165,21 +159,14 @@ copiousoutput :: Parser Field
 copiousoutput = stringCI "copiousoutput" $> Flag "copiousoutput"
 
 -- | Comments
-comment :: Parser MailcapLine
-comment = emptyline <|> prefixedcomment
+comment :: Parser ()
+comment = endOfLine <|> prefixedcomment
 
-emptyline :: Parser MailcapLine
-emptyline = endOfLine $> Comment "\n"
-
-prefixedcomment :: Parser MailcapLine
-prefixedcomment = do
-  _ <- string "#"
-  c <- commenttext
-  skipSpace
-  pure $ Comment c
+prefixedcomment :: Parser ()
+prefixedcomment = string "#" *> commenttext *> skipSpace
   where
-    commenttext :: Parser B.ByteString
-    commenttext = many' commentchar <&> B.pack
+    commenttext :: Parser ()
+    commenttext = skipMany commentchar
     commentchar = qchar <|> notEOL
     notEOL = satisfy (not . isEndOfLine)
 

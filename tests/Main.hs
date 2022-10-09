@@ -37,8 +37,7 @@ tests :: TestTree
 tests =
   testGroup
     "Parser tests"
-    [ testCommentParsing
-    , testMailcapfileParsing
+    [ testMailcapfileParsing
     , testFieldParsing
     , testEntryParsing
     ]
@@ -49,32 +48,16 @@ testMailcapfileParsing =
     "Mailcap field tests"
     [ testCase "multiple comments" $
         parseOnly mailcapfile "# This is a comment \n# Another\n# comment"
-          @?= Right [Comment " This is a comment ", Comment " Another", Comment " comment"]
+          @?= Right []
     , testCase "whitespace prefixed" $
         parseOnly mailcapfile "\n\n# comment\naudio/*; rplay %s\n"
-          @?= Right [ Comment "\n"
-                    , Comment "\n"
-                    , Comment " comment"
-                    , MailcapEntry $
-                      Entry { _contentType = "audio/*"
+          @?= Right [ Entry { _contentType = "audio/*"
                             , _viewCommand = ShellCommand [
                                   Argument "rplay"
                                 , MailbodyPathTemplate]
                             , _fields = []
                             }
                     ]
-    ]
-
-testCommentParsing :: TestTree
-testCommentParsing =
-  testGroup
-    "Mailcap field tests"
-    [ testCase "empty comment" $
-        parseOnly comment "# \n"
-          @?= Right (Comment " "),
-      testCase "commented out mailcap lines" $
-        parseOnly comment "#audio/basic; showaudio %s; compose=audiocompose %s;\\\n#\tedit=audiocompose %s; description=\"An audio fragment\"\n"
-          @?= Right (Comment "audio/basic; showaudio %s; compose=audiocompose %s;\n#\tedit=audiocompose %s; description=\"An audio fragment\"")
     ]
 
 testFieldParsing :: TestTree
@@ -96,8 +79,7 @@ testEntryParsing =
     [ testCase "mandatory fields only" $
         parseOnly mailcapentry "application/octet-stream; hexdump\n"
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "application/octet-stream",
                     _viewCommand = ShellCommand [Argument "hexdump"],
                     _fields = []
@@ -106,8 +88,7 @@ testEntryParsing =
       testCase "flags and named fields (case insensitive)" $
         parseOnly mailcapentry "application/octet-stream; hexdump; neEdstErmInal; copiOusoUtput; x11-BItmap=\"/usr/lib/zmail\"\n"
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "application/octet-stream",
                     _viewCommand = ShellCommand [Argument "hexdump"],
                     _fields =
@@ -120,8 +101,7 @@ testEntryParsing =
       testCase "wildcard content type" $
         parseOnly mailcapentry "audio/*; rplay %s \\; exit 1\n"
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "audio/*",
                     _viewCommand = ShellCommand [Argument "rplay", MailbodyPathTemplate, Argument ";", Argument "exit", Argument "1"],
                     _fields = []
@@ -130,8 +110,7 @@ testEntryParsing =
       testCase "named fields" $
         parseOnly mailcapentry "audio/x-pn-mp3;     realplayer %s; test=test \"$DISPLAY\" != \"\""
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "audio/x-pn-mp3",
                     _viewCommand = ShellCommand [Argument "realplayer", MailbodyPathTemplate],
                     _fields = [Test "test \"$DISPLAY\" != \"\""]
@@ -140,8 +119,7 @@ testEntryParsing =
       testCase "multiline entry" $
         parseOnly mailcapentry "audio/basic; showaudio %s; compose=audiocompose %s; \\\n\tedit=audiocompose %s; description=\"An audio fragment\""
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "audio/basic",
                     _viewCommand = ShellCommand [Argument "showaudio", MailbodyPathTemplate],
                     _fields =
@@ -154,8 +132,7 @@ testEntryParsing =
       testCase "print field" $
         parseOnly mailcapentry "image/x-fax-g3; true; print=printfax %s"
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "image/x-fax-g3",
                     _viewCommand = ShellCommand [Argument "true"],
                     _fields = [Print "printfax %s"]
@@ -164,8 +141,7 @@ testEntryParsing =
       testCase "textual new lines - truthy" $
         parseOnly mailcapentry "application/x-backup; /usr/bin/backup %s; textualnewlines=1; test=test -n \"$DISPLAY\""
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "application/x-backup",
                     _viewCommand = ShellCommand [Argument "/usr/bin/backup", MailbodyPathTemplate],
                     _fields = [TextualNewlines True, Test "test -n \"$DISPLAY\""]
@@ -174,8 +150,7 @@ testEntryParsing =
       testCase "textual new lines - falsy" $
         parseOnly mailcapentry "application/x-backup; /usr/bin/backup %s; textualnewlines=0; test=test -n \"$DISPLAY\""
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "application/x-backup",
                     _viewCommand = ShellCommand [Argument "/usr/bin/backup", MailbodyPathTemplate],
                     _fields = [TextualNewlines False, Test "test -n \"$DISPLAY\""]
@@ -184,8 +159,7 @@ testEntryParsing =
       testCase "composetyped field" $
         parseOnly mailcapentry "message/external-body; showexternal %s %{access-type} %{name} %{site} \\\n\t%{directory} %{mode} %{server}; \\\n\tneedsterminal; composetyped = extcompose %s; \\\n\tdescription=\"A reference to data stored in an external location\""
           @?= Right
-            ( MailcapEntry $
-                Entry
+            ( Entry
                   { _contentType = "message/external-body",
                     _viewCommand = ShellCommand [ Argument "showexternal"
                                                 , MailbodyPathTemplate
