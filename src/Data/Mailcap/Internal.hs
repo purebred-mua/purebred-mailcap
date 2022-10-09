@@ -1,4 +1,4 @@
-module Data.RFC1524.Internal (
+module Data.Mailcap.Internal (
   ContentType(..)
   , parseContentType
   , ci

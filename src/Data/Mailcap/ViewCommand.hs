@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Data.RFC1524.ViewCommand (
+module Data.Mailcap.ViewCommand (
     viewCommand
   , shellargument
   , argument
@@ -15,7 +15,7 @@ import Data.Word (Word8)
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.ByteString as B
 
-import Data.RFC1524.Internal (qchar)
+import Data.Mailcap.Internal (qchar)
 
 -- | Parsing of executable commands
 data ShellArgument
