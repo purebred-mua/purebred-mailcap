@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- This file is part of purebred-mailcap
--- Copyright (C) 2021 Róman Joost
+-- Copyright (C) 2022 Róman Joost
 --
--- purebred-email is free software: you can redistribute it and/or modify
+-- purebred-mailcap is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU Affero General Public License as published by
 -- the Free Software Foundation, either version 3 of the License, or
 -- (at your option) any later version.

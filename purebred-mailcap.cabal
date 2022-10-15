@@ -9,9 +9,8 @@ description:
   .
   - RFC1524 mailcap files parsing
 
--- A URL where users can report bugs.
--- bug-reports:
-
+homepage:           https://github.com/purebred-mua/purebred-mailcap
+bug-reports:        https://github.com/purebred-mua/purebred-mailcap/issues
 license:            AGPL-3.0-or-later
 license-file:       LICENSE
 author:             Róman Joost
@@ -19,9 +18,13 @@ maintainer:         roman@bromeco.de
 tested-with:
   GHC ==8.8.4 || ==8.10.4 || ==9.0.1
 
-copyright:           Copyright 2021 Róman Joost
+copyright:           Copyright 2022 Róman Joost
 category:            Data, Email
 extra-source-files:  CHANGELOG.md
+
+source-repository head
+  type: git
+  location: https://github.com/purebred-mua/purebred-mailcap.git
 
 library
     exposed-modules:  Data.Mailcap
@@ -58,11 +61,6 @@ test-suite tests
 executable purebred-mailcap
     main-is:          Main.hs
 
-    -- Modules included in this executable, other than Main.
-    -- other-modules:
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
     build-depends:    base >= 4.11 && < 5
                     , bytestring
                     , purebred-mailcap
